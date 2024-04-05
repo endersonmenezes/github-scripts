@@ -1,4 +1,6 @@
 *.csv
 *.gif
 *.yml
+*.txt
+*.json
 !*.example.csv

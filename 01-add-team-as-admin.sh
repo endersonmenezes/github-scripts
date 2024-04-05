@@ -7,20 +7,19 @@
 # Usage: bash add-team-as-admin.sh
 ##
 
-# Create a SHA256 of the file for audit
-SHA256=$(sha256sum $0 | cut -d' ' -f1)
-echo "Executing a file: $0, with SHA256: $SHA256"
+# Read Common Functions
+source functions.sh
 
-## Read a CSV file (owner-repo,team)
-FILE="repositories.csv"
+# Verify GH is installed
+is_gh_installed
 
-# Verify if the file exists
-if [ ! -f $FILE ]; then
-    echo "The file $FILE does not exist."
-    exit 1
-fi
+# Create a SHA256 of the file for audit (Define SHA256 varible)
+audit_file
 
-# Verify a file format
+## Read a CSV file (owner-repo,team) (Define FILE variable)
+read_config_file
+
+# Specific Config File
 if [[ $(head -n 1 $FILE) != "owner-repo,team" ]]; then
     echo "The file $FILE does not have the correct format."
     exit 1
