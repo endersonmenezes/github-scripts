@@ -1,2 +1,2 @@
-owner-repo,team
-org/repo,team
+owner-repo,team,permission
+owner/repo,team1,admin

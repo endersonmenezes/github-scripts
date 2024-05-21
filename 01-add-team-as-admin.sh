@@ -16,11 +16,11 @@ is_gh_installed
 # Create a SHA256 of the file for audit (Define SHA256 varible)
 audit_file
 
-## Read a CSV file (owner-repo,team) (Define FILE variable)
+## Read a CSV file (owner-repo,team,permission) (Define FILE variable)
 read_config_file
 
 # Specific Config File
-if [[ $(head -n 1 $FILE) != "owner-repo,team" ]]; then
+if [[ $(head -n 1 $FILE) != "owner-repo,team,permission" ]]; then
     echo "The file $FILE does not have the correct format."
     exit 1
 fi
@@ -33,7 +33,7 @@ if [[ $(tail -n 1 $FILE) != "" ]]; then
 fi
 
 # Read line by line
-while IFS=, read -r OWNER_REPO TEAM; do
+while IFS=, read -r OWNER_REPO TEAM PERMISSION; do
 
     # Continue on first line
     [ "$OWNER_REPO" == "owner-repo" ] && continue
@@ -60,14 +60,15 @@ while IFS=, read -r OWNER_REPO TEAM; do
     echo "The team ${TEAM} exists and you have permission to access."
 
     # Add the team as admin
-    echo "Adding the team ${TEAM} as admin on the repository ${OWNER_REPO}..."
+    echo "Adding the team ${TEAM} as ${PERMISSION} on the repository ${OWNER_REPO}..."
     gh api \
         --method PUT \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         /orgs/"${OWNER}"/teams/"${TEAM}"/repos/"${OWNER}"/"${REPOSITORY}" \
-        -f permission='admin' > /dev/null || {
-        echo "An error occurred while adding the team ${TEAM} as admin on the repository ${OWNER_REPO}."
+        -f permission="${PERMISSION}" &>/dev/null || {
+        echo "The team ${TEAM} was not added as ${PERMISSION} on the repository ${OWNER_REPO}."
+        exit 1
     }
-    echo "The team ${TEAM} was added as admin on the repository ${OWNER_REPO}."
+    echo "The team ${TEAM} was added as ${PERMISSION} on the repository ${OWNER_REPO}."
 done < $FILE
