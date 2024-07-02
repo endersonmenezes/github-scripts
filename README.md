@@ -25,3 +25,7 @@ All scripts have a common features:
 - `01-add-team-as-admin.sh` - Add a set of repo/teams from 01-add-team-as-admin.csv
 - `02-archive-repos.sh` - Archive a set of repos from 02-archive-repos.csv
 - `03-force-code-owners-all-teams.sh` - Migrate to: https://github.com/endersonmenezes/codeowners-superpowers
+- `04-app-token.sh` - Generate a token for a set of apps from 04-app-token.csv
+- `05-list-repos-and-teams.sh` - List all repos and teams from Organization.
+- `06-analyze-logs.py` - Transform JSONL to CSV for logging analysis.
+- `07-delete-teams.sh` - Delete a set of teams from 07-delete-teams.csv
