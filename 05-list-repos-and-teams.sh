@@ -32,3 +32,18 @@ gh api \
 
 # Create CSV file: team_name, team_id
 jq -r '.[] | [.name, .id] | @csv' teams_$organization.json > teams_$organization.csv
+
+# Remove " from CSV files
+sed -i 's/"//g' repos_$organization.csv
+sed -i 's/"//g' teams_$organization.csv
+
+# Catch all teams with access to repositories
+echo "organization,repository,have_repository_owner,team_name,team_id" > teams_repos_$organization.csv
+
+for repository in $(jq -r '.[] | select(.archived == false) | .name' repos_$organization.json); do
+  # Teams with Access
+  gh api \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    /repos/$organization/$repository/teams > teams_access_$organization_$repository.json
+done
