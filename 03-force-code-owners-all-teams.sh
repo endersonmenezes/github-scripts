@@ -4,7 +4,7 @@
 # Author: Enderson Menezes
 # Created: 2024-03-08
 # Description: This script reads a repositores.csv file, and grant permissions on repo.
-# Usage: bash add-team-as-admin.sh
+# Usage: bash 03-force-code-owners-all-teams.sh
 ##
 
 # Read Common Functions
