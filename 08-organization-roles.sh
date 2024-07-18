@@ -66,10 +66,23 @@ verify_json_file_and_permissions() {
         create_org_role $ROLE_NAME "${PERMISSIONS[@]}" $DESCRIPTION
     fi
 
+    # Role ID
+    ROLE_ID=$(echo $SUPPORT_ROLE | jq -r ".id")
+    if [ -z "$ROLE_ID" ]; then
+        echo "Role ID not found."
+        exit 1
+    fi
+
+    # Update role
+    echo "Sync role $ROLE_NAME"
+    update_organization_role $ROLE_ID $ROLE_NAME $DESCRIPTION "${PERMISSIONS[@]}"
+
+
     # Verify if the permissions exists
     for PERMISSION in ${PERMISSIONS[@]}; do
+        echo "---> Verify permission $PERMISSION"
         SUPPORT_PERMISSION=$(echo $SUPPORT_ROLE | jq -r ".permissions[] | select(. == \"$PERMISSION\")")
-        if [ $? -ne 0 ]; then
+        if [ -z "$SUPPORT_PERMISSION" ]; then
             echo "Permission $PERMISSION not found."
             exit 1
         fi
@@ -106,7 +119,47 @@ create_org_role(){
         -H "X-GitHub-Api-Version: 2022-11-28" \
         /orgs/$ORGANIZATION/organization-roles \
         -f "name=$ROLE_NAME" \
-        -f "description=Permissions to manage custom roles within an org" \
+        -f "description=$DESCRIPTION" \
+        "${permissions[@]}" > /dev/null
+}
+
+update_organization_role(){
+    ROLE_ID=$1
+    if [ -z "$ROLE_ID" ]; then
+        echo "Please inform the role id."
+        exit 1
+    fi
+
+    ROLE_NAME=$2
+    if [ -z "$ROLE_NAME" ]; then
+        echo "Please inform the role name."
+        exit 1
+    fi
+
+    DESCRIPTION=$3
+    if [ -z "$DESCRIPTION" ]; then
+        echo "Please inform the description."
+        exit 1
+    fi
+
+    PERMISSIONS=$4
+    if [ -z "$PERMISSIONS" ]; then
+        echo "Please inform the permissions."
+        exit 1
+    fi
+
+    permissions=()
+    for permission in "${PERMISSIONS[@]}"; do
+        permissions+=("-f" "permissions[]=$permission")
+    done
+
+    gh api \
+        --method PATCH \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        /orgs/$ORGANIZATION/organization-roles/$ROLE_ID \
+        -f "name=$ROLE_NAME" \
+        -f "description=$DESCRIPTION" \
         "${permissions[@]}" > /dev/null
 }
 
