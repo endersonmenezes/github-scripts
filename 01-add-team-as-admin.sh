@@ -61,6 +61,8 @@ while IFS=, read -r OWNER_REPO TEAM PERMISSION; do
 
     # Add the team as admin
     echo "Adding the team ${TEAM} as ${PERMISSION} on the repository ${OWNER_REPO}..."
+    
+    # Add or update the team as permissions
     gh api \
         --method PUT \
         -H "Accept: application/vnd.github+json" \

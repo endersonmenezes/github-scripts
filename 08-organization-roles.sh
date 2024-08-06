@@ -198,4 +198,12 @@ PERMISSIONS=(
 DESCRIPTION="Custom role for custom actions that the Built-in role does not understand."
 verify_json_file_and_permissions organization-roles-$ORGANIZATION.json $NAME "${PERMISSIONS[@]}" $DESCRIPTION
 
+### - Platform Mobile Admin - ###
+NAME="actions-mobile-admin"
+PERMISSIONS=(
+    "read_organization_actions_usage_metrics"
+)
+DESCRIPTION="Custom role for see actions usage metrics"
+verify_json_file_and_permissions organization-roles-$ORGANIZATION.json $NAME "${PERMISSIONS[@]}" $DESCRIPTION
+
 
