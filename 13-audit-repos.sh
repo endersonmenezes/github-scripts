@@ -25,7 +25,7 @@ get_pr_details_from_url(){
     PR_NUMBER=$(cut -d'/' -f8 <<< "${PR_URL}")
     OWNER=$(cut -d'/' -f5 <<< "${PR_URL}")
     REPOSITORY=$(cut -d'/' -f6 <<< "${PR_URL}")
-    echo "Getting PR details for PR ${PR_NUMBER} on ${OWNER}/${REPOSITORY}"
+    # echo "Getting PR details for PR ${PR_NUMBER} on ${OWNER}/${REPOSITORY}"
     gh api \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -33,7 +33,7 @@ get_pr_details_from_url(){
 
     # Status URL .statuses_url
     STATUS_URL=$(jq -r '.statuses_url' "${AUDIT_FOLDER}/${OWNER}_${REPOSITORY}/pr_${PR_NUMBER}.json")
-    echo "Getting PR status for PR ${PR_NUMBER} on ${OWNER}/${REPOSITORY}"
+    # echo "Getting PR status for PR ${PR_NUMBER} on ${OWNER}/${REPOSITORY}"
     gh api \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -41,7 +41,7 @@ get_pr_details_from_url(){
 
     # Get Review from PR
     # /repos/{owner}/{repo}/pulls/{pull_number}/reviews
-    echo "Getting PR reviews for PR ${PR_NUMBER} on ${OWNER}/${REPOSITORY}"
+    # echo "Getting PR reviews for PR ${PR_NUMBER} on ${OWNER}/${REPOSITORY}"
     gh api \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -113,7 +113,7 @@ while IFS=, read -r OWNER REPOSITORY START_DATE END_DATE QUERY_PRS; do
     echo "Query: ${QUERY_PRS}"
 
     # PRs Analyze
-    echo "id,number,title,html_url,user.login,pull_request.merged_at,pull_request.url" > "${AUDIT_FILE}"
+    echo "id,number,title,html_url,user.login,pull_request.merged_at,pull_request.url,merge_commit_sha,approved_by" > "${AUDIT_FILE}"
     
     # GitHub CLI Search Issues and Pull Requests
     # https://docs.github.com/pt/rest/search/search?apiVersion=2022-11-28#search-issues-and-pull-requests
@@ -130,13 +130,14 @@ while IFS=, read -r OWNER REPOSITORY START_DATE END_DATE QUERY_PRS; do
     jq -r '.items[] | [.id, .number, .title, .html_url, .user.login, .pull_request.merged_at, .pull_request.url] | @csv' "${AUDIT_FOLDER}/prs_${OWNER}_${REPOSITORY}.json" >> "${AUDIT_FILE}"
 
     # QTY
-    echo "Total PRs: $(wc -l < "${AUDIT_FILE}")"
+    echo "Total PRs: $(($(wc -l < "${AUDIT_FILE}") - 1))"
 
     # Get Pull Request API
 
     # Create folder $AUDIT_FOLDER/$OWNER_$REPOSITORY
-    if [ ! -d "${AUDIT_FOLDER}/${OWNER}_${REPOSITORY}" ]; then
-        mkdir "${AUDIT_FOLDER}/${OWNER}_${REPOSITORY}"
+    PRS_FOLDER="${AUDIT_FOLDER}/${OWNER}_${REPOSITORY}"
+    if [ ! -d "${PRS_FOLDER}" ]; then
+        mkdir "${PRS_FOLDER}"
     fi
 
     # For each PR, get the PR details
@@ -144,6 +145,33 @@ while IFS=, read -r OWNER REPOSITORY START_DATE END_DATE QUERY_PRS; do
     
     # Using get_pr_details_from_url and xargs
     echo "${PR_URL_LIST}" | xargs -n 1 -P 10 -I {} bash -c "get_pr_details_from_url {}"
+
+    # Catch details file and list merge_commit_sha
+    REGEX="pr_([0-9]+).json"
+    DETAILS_FILES=$(ls ${PRS_FOLDER}/pr_*.json | grep -E "${REGEX}")
+    for DETAILS_FILE in $DETAILS_FILES; do
+        MERGE_COMMIT_SHA=""
+        FILE_NAME=$(basename "${DETAILS_FILE}")
+        PR_NUMBER_WITH_EXTENSION=$(cut -d'_' -f2 <<< "${FILE_NAME}")
+        PR_NUMBER=$(cut -d'.' -f1 <<< "${PR_NUMBER_WITH_EXTENSION}")
+
+        # Catch merge_commit_sha
+        MERGE_COMMIT_SHA=$(jq -r '.merge_commit_sha' "${DETAILS_FILE}")
+        echo "PR ${PR_NUMBER} Merge Commit SHA: ${MERGE_COMMIT_SHA}"
+
+        # Catch review file and list approved reviews
+        REVIEW_FILE="${PRS_FOLDER}/pr_${PR_NUMBER}_reviews.json"
+        echo "Getting approved reviews for PR ${PR_NUMBER} on ${OWNER}/${REPOSITORY}"
+        APPROVALS=$(jq -r '.[] | select(.state == "APPROVED") | .user.login' "${REVIEW_FILE}")
+        echo "Approved by: ${APPROVALS}"
+
+        # Use MERGE_COMMIT_SHA to get run jobs workflows
+        echo "Getting jobs runs for PR ${PR_NUMBER} on ${OWNER}/${REPOSITORY}"
+        gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${OWNER}/${REPOSITORY}/actions/runs?head_sha=${MERGE_COMMIT_SHA}" > "${PRS_FOLDER}/pr_${PR_NUMBER}_jobs_runs.json"
+    done
 
     echo "---"
 done < "${FILE}"
