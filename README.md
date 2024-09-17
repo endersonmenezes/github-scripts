@@ -29,3 +29,15 @@ All scripts have a common features:
 - `05-list-repos-and-teams.sh` - List all repos and teams from Organization.
 - `06-analyze-logs.py` - Transform JSONL to CSV for logging analysis.
 - `07-delete-teams.sh` - Delete a set of teams from 07-delete-teams.csv
+- `08-organization-roles.sh` - Manage organization roles for a given organization.
+- `09-archive-or-delete-repo.sh` - Archive a repository if it has content, delete if it does not.
+- `10-repo-activity.sh` - Return a CSV for activity in repositories.
+- `11-if-archived-remove-all-access.sh` - Remove all access from archived repositories.
+- `12-list-public-repos.sh` - List all public repositories for given organizations.
+- `13-audit-repos.sh` - Audit repositories based on a CSV file.
+- `14-remove-all-admin-to-write.sh` - Downgrade all team permissions on repositories from admin to write.
+- `15-public-to-private-and-archive.sh` - Transform a public repository to private and archive it.
+
+## functions.sh
+
+The `functions.sh` file contains common functions used by the scripts. It includes functions to verify if GitHub CLI is installed, read configuration files, and create SHA256 hashes for audit purposes.
