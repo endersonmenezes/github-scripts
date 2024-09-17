@@ -14,11 +14,11 @@ if [ -z $organization ]; then
 fi
 
 # List all repositories in an organization
-# gh api \
-#   -H "Accept: application/vnd.github+json" \
-#   -H "X-GitHub-Api-Version: 2022-11-28" \
-#   /orgs/$organization/repos \
-#   --paginate > repos_$organization.json
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  /orgs/$organization/repos \
+  --paginate > repos_$organization.json
 
 # Filter only the archived repositories
 jq -r '.[] | select(.archived == true) | .name' repos_$organization.json > archived_repos_$organization.txt
