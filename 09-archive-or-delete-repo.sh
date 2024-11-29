@@ -40,17 +40,32 @@ while IFS=, read -r REPOSITORY; do
     # Ignore blank line
     [ -z "$REPOSITORY" ] && continue
 
+    ORGANIZATION=$(echo $REPOSITORY | cut -d'/' -f1)
+    REPOSITORY_ONLY=$(echo $REPOSITORY | cut -d'/' -f2)
+
     echo "Processing repository: $REPOSITORY"
 
     # Verify if repository have content
     REPOSITORY_CONTENT=$(gh api /repos/$REPOSITORY/contents)
 
+    # Remove all teams with access
+
+    gh api \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        /repos/$REPOSITORY/teams > teams.json
+
+    jq -r '.[].slug' teams.json | while read team; do
+        echo "Removing team $team from repository $REPOSITORY"
+        gh api -X DELETE /orgs/$ORGANIZATION/teams/$team/repos/$REPOSITORY > /dev/null
+    done
+
     # if "This repository is empty." then delete
     if [[ "$REPOSITORY_CONTENT" == *"This repository is empty."* ]]; then
         echo "-> Repository is empty. Deleting..."
-        gh repo delete $REPOSITORY --yes
+        gh repo delete $REPOSITORY --yes > /dev/null
     else
         echo "-> Repository have content. Archiving..."
-        gh api -X PATCH /repos/$REPOSITORY -F archived=true
+        gh api -X PATCH /repos/$REPOSITORY -F archived=true > /dev/null
     fi
 done < $FILE
