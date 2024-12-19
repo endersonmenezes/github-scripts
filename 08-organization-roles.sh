@@ -238,7 +238,7 @@ PERMISSIONS=(
     "write_organization_runners_and_runner_groups"
 )
 DESCRIPTION="Time de foundation que fornece suporte ao Github"
-BASE_ROLE="none"
+BASE_ROLE="admin"
 verify_json_file_and_permissions ${FILE_NAME} ${NAME} "${DESCRIPTION}" "${BASE_ROLE}" "${PERMISSIONS[@]}"
 
 ### - access-admin - ###
