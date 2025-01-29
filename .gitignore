@@ -5,3 +5,4 @@
 *.json
 !*.example.csv
 audit/*
+runner-files/*
