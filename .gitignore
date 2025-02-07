@@ -6,3 +6,5 @@
 !*.example.csv
 audit/*
 runner-files/*
+runner-files/analyze.py
+runner-files/.python-version
