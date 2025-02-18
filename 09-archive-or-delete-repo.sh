@@ -4,7 +4,7 @@
 # Author: Enderson Menezes
 # Created: 2024-07-18
 # Description: This script archive a repository if have content and delete if not.
-# Usage: bash add-team-as-admin.sh
+# Usage: bash 09-archive-or-delete-repo.sh
 ##
 
 # Read Common Functions
