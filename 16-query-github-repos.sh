@@ -7,7 +7,7 @@
 # Usage: bash 15-public-to-private-and-archive.sh
 ##
 
-QUERY="user:stone-payments user:pagarme user:dlpco user:mundipagg user:stone-ton size:<0.5 archived:false pushed:<2024-12-31"
+QUERY="user:stone-payments user:pagarme user:dlpco user:mundipagg user:stone-ton archived:false language:HCL"
 PARSED_QUERY=$(echo $QUERY | sed 's/ /+/g')
 
 # https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-repositories
@@ -36,15 +36,19 @@ for REPO in $REPOS_TO_CHECK; do
   TEAM_PERMISSION=$(jq -r '.[] | select(.permission == "Repository owner")' 16-query-github-repos-teams.json)
   if [ -n "$TEAM_PERMISSION" ]; then
     echo "Repository $REPO_NAME have team with 'Repository owner' permission"
-    TEAMS=$(jq -r '.[] | .name' 16-query-github-repos-teams.json | paste -sd "," -)
+    TEAMS=$(echo $TEAM_PERMISSION | jq -r '.name' | tr '\n' ',' | sed 's/,$//')
+    echo "Teams: $TEAMS"
     jq --arg TEAMS "$TEAMS" --arg REPO "$REPO" '.items = (.items | map(if .full_name == $REPO then . + {"repository_owner": $TEAMS} else . end))' 16-query-github-repos.json > 16-query-github-repos.tmp.json
     mv 16-query-github-repos.tmp.json 16-query-github-repos.json
   else
     echo "Repository $REPO_NAME don't have team with 'Repository owner' permission"
-    jq --arg REPO "$REPO" '.items = (.items | map(if .full_name == $REPO then . + {"repository_owner": ""} else . end))' 16-query-github-repos.json > 16-query-github-repos.tmp.json
+    jq --arg REPO "$REPO" '.items = (.items | map(if .full_name == $REPO then . + {"repository_owner": "Não encontrado"} else . end))' 16-query-github-repos.json > 16-query-github-repos.tmp.json
     mv 16-query-github-repos.tmp.json 16-query-github-repos.json
   fi
 done
 
 # Create CSV from .[]items
 jq -r '.items[] | [.full_name, .html_url, .created_at, .updated_at, .pushed_at, .size, .archived, .repository_owner] | @csv' 16-query-github-repos.json > 16-query-github-repos.csv
+
+# Inserd header
+sed -i '1s/^/full_name,html_url,created_at,updated_at,pushed_at,size,archived,repository_owner\n/' 16-query-github-repos.csv
