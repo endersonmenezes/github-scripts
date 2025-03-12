@@ -42,7 +42,7 @@ function process_dependabot_alerts() {
   local alerts=$(gh api \
     -H "Accept: $ACCEPT_HEADER" \
     -H "X-GitHub-Api-Version: $API_VERSION" \
-    -- paginate \
+    --paginate \
     "/repos/$owner/$repo/dependabot/alerts?state=open" | jq -r '.[] | .number')
   
   # Fecha os alertas do Dependabot
