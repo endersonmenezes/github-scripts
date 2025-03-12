@@ -22,7 +22,7 @@ echo "Consulting GitHub API: $URL"
 gh api \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
-  "$URL" --paginate > 16-query-github-repos.json]
+  "$URL" --paginate > 16-query-github-repos.json
 
 # Check if have team with "Repository owner" permission and updated that JSON with key "repository_owner" with value of all teams comma separated
 # API to Check Owner: https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-repository-teams
