@@ -42,6 +42,7 @@ function process_dependabot_alerts() {
   local alerts=$(gh api \
     -H "Accept: $ACCEPT_HEADER" \
     -H "X-GitHub-Api-Version: $API_VERSION" \
+    -- paginate \
     "/repos/$owner/$repo/dependabot/alerts?state=open" | jq -r '.[] | .number')
   
   # Fecha os alertas do Dependabot
@@ -73,6 +74,7 @@ function process_code_scanning_alerts() {
   local alerts=$(gh api \
     -H "Accept: $ACCEPT_HEADER" \
     -H "X-GitHub-Api-Version: $API_VERSION" \
+    --paginate \
     "/repos/$owner/$repo/code-scanning/alerts?state=open" | jq -r '.[] | .number')
 
   # Fecha os alertas do Code Scanning
