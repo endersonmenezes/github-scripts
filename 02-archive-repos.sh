@@ -107,6 +107,12 @@ function remove_team_access() {
   
   # Obter todas as equipes com acesso
   gh api "/repos/${owner}/${repo}/teams" > "$teams_file"
+
+  # Verify have a team with "Repository owner" permission
+  if [ $(jq -r '.[].permission' "$teams_file" | grep -c 'Repository owner') -gt 0 ]; then
+    echo "O repositório possui equipes com permissão de administrador, não será necessário arquivar."
+    return 1
+  fi
   
   for team in $(jq -r '.[].slug' "$teams_file"); do
     echo "- Removendo acesso da equipe: ${team}"
@@ -151,8 +157,8 @@ function archive_repository() {
   local repo=$2
   
   echo "Arquivando repositório $owner/$repo..."
-  # gh repo archive $owner/$repo -y
-  echo "Repositório $owner/$repo foi arquivado (SIMULADO)"
+  gh repo archive $owner/$repo -y
+  echo "Repositório $owner/$repo foi arquivado"
 }
 
 ###############################################################################
@@ -175,14 +181,20 @@ for repo_path in $(cat $FILE | grep -v '^#' | grep -v '^$' | awk -F, '{print $1}
   REPO=$(echo $repo_path | awk -F/ '{print $2}')
 
   echo "Processando repositório: $OWNER/$REPO"
+
+  # Remove acessos
+  remove_team_access $OWNER $REPO
+  if [ $? -eq 1 ]; then
+    echo "Pulando para o próximo repositório..."
+    show_separator
+    continue
+  fi
+
+  remove_direct_collaborators $OWNER $REPO
   
   # Processa os alertas de segurança
   process_dependabot_alerts $OWNER $REPO
   process_code_scanning_alerts $OWNER $REPO
-  
-  # Remove acessos
-  remove_team_access $OWNER $REPO
-  remove_direct_collaborators $OWNER $REPO
   
   # Arquiva o repositório (comentado conforme solicitado)
   archive_repository $OWNER $REPO
