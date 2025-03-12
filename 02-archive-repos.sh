@@ -182,6 +182,13 @@ for repo_path in $(cat $FILE | grep -v '^#' | grep -v '^$' | awk -F, '{print $1}
 
   echo "Processando repositório: $OWNER/$REPO"
 
+  # Valida se o repositório já está arquivado
+  if [ "$(gh repo view $OWNER/$REPO --json isArchived --jq '.isArchived')" = "true" ]; then
+    echo "Repositório já está arquivado, pulando para o próximo..."
+    show_separator
+    continue
+  fi
+
   # Remove acessos
   remove_team_access $OWNER $REPO
   if [ $? -eq 1 ]; then
