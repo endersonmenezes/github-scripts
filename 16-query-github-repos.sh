@@ -4,10 +4,16 @@
 # Author: Enderson Menezes
 # Created: 2025-02-07
 # Description: This script will query GitHub API to get all repositories from a specific query.
-# Usage: bash 15-public-to-private-and-archive.sh
+# Usage: bash 16-query-github-repos.sh "QUERY"
 ##
 
-QUERY="user:stone-payments user:pagarme user:dlpco user:mundipagg user:stone-ton archived:false language:HCL"
+QUERY="$1"
+# Validate parameters
+if [[ -z "$QUERY" ]]; then
+  echo "Query is required"
+  exit 1
+fi
+
 PARSED_QUERY=$(echo $QUERY | sed 's/ /+/g')
 
 # https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-repositories
@@ -16,7 +22,7 @@ echo "Consulting GitHub API: $URL"
 gh api \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
-  "$URL" --paginate > 16-query-github-repos.json
+  "$URL" --paginate > 16-query-github-repos.json]
 
 # Check if have team with "Repository owner" permission and updated that JSON with key "repository_owner" with value of all teams comma separated
 # API to Check Owner: https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-repository-teams
