@@ -47,8 +47,6 @@ if [[ $(echo $DATE_END | grep -c "^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}$") -ne 1 ]];
   exit 1
 fi
 
-
-
 NORMALIZE_REPO_NAME_KEBAB=$(echo $REPO | tr '[:upper:]' '[:lower:]' | tr '/' '-')
 FILE_PREFIX="audit-$NORMALIZE_REPO_NAME_KEBAB-$DATE_START-$DATE_END"
 FILE_PREFIX_WITHOUT_DATE="audit-$NORMALIZE_REPO_NAME_KEBAB"
