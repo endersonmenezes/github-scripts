@@ -1,11 +1,22 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub App Token Generator
+#
 # Author: Enderson Menezes
 # Created: 2024-03-08
-# Description: This script reads a repositores.csv file, and grant permissions on repo.
-# Usage: bash add-team-as-admin.sh
-##
+# Updated: 2025-03-14
+#
+# Description:
+#   This script reads a CSV file and generates GitHub App tokens using
+#   the provided credentials. The tokens can be used for API authentication
+#   with elevated permissions.
+#
+# Input File Format (04-app-token.csv):
+#   owner,app_id,app_install_id,file
+#
+# Usage: bash 04-app-token.sh
+###############################################################################
 
 # Read Common Functions
 source functions.sh
@@ -40,7 +51,7 @@ while IFS=, read -r OWNER APP_ID APP_INSTALL_ID FILE_PEM; do
     # Ignore blank line
     [ -z "$OWNER" ] && continue
 
-    echo "Generating to file: $FILE_PEM"
+    echo "Generating token for organization: $OWNER"
 
     # Generate JWT
     ORGANIZATION=$OWNER
@@ -60,5 +71,5 @@ while IFS=, read -r OWNER APP_ID APP_INSTALL_ID FILE_PEM; do
     JWT="${HEADER_PAYLOAD}"."${SIGNATURE}"
     RESPONSE=$(curl -i -X POST -H "Authorization: Bearer ${JWT}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/app/installations/"${GITHUB_ORG_INSTALL_ID}"/access_tokens)
     TOKEN=$( echo "${RESPONSE}" | grep -Po '"token": "\K.*?(?=")' )
-    echo "Token to $OWNER is: $TOKEN"
+    echo "Token for $OWNER: $TOKEN"
 done < $FILE
