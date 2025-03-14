@@ -1,11 +1,25 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub Repository Archive or Delete Tool
+#
 # Author: Enderson Menezes
 # Created: 2024-07-18
-# Description: This script archive a repository if have content and delete if not.
+# Updated: 2025-03-14
+#
+# Description:
+#   This script examines GitHub repositories and takes one of two actions:
+#   1. Archives repositories that contain content
+#   2. Deletes repositories that are empty
+#   
+#   The script also removes all team access from the repositories before
+#   archiving or deleting them.
+#
+# Input File Format (09-archive-or-delete-repo.csv):
+#   repository
+#
 # Usage: bash 09-archive-or-delete-repo.sh
-##
+###############################################################################
 
 # Read Common Functions
 source functions.sh
@@ -49,7 +63,6 @@ while IFS=, read -r REPOSITORY; do
     REPOSITORY_CONTENT=$(gh api /repos/$REPOSITORY/contents)
 
     # Remove all teams with access
-
     gh api \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -60,12 +73,12 @@ while IFS=, read -r REPOSITORY; do
         gh api -X DELETE /orgs/$ORGANIZATION/teams/$team/repos/$REPOSITORY > /dev/null
     done
 
-    # if "This repository is empty." then delete
+    # If "This repository is empty." then delete
     if [[ "$REPOSITORY_CONTENT" == *"This repository is empty."* ]]; then
         echo "-> Repository is empty. Deleting..."
         gh repo delete $REPOSITORY --yes > /dev/null
     else
-        echo "-> Repository have content. Archiving..."
+        echo "-> Repository has content. Archiving..."
         gh api -X PATCH /repos/$REPOSITORY -F archived=true > /dev/null
     fi
 done < $FILE
