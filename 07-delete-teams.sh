@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub Team Deletion Tool
+#
 # Author: Enderson Menezes
 # Created: 2024-03-08
-# Description: This script delete all teams.
+# Updated: 2025-03-14
+#
+# Description:
+#   This script reads a CSV file containing team and organization information,
+#   then uses the GitHub API to delete the specified teams.
+#
+# Input File Format (07-delete-teams.csv):
+#   team,org
+#
 # Usage: bash 07-delete-teams.sh
-##
+###############################################################################
 
 # Read Common Functions
 source functions.sh
@@ -32,7 +42,7 @@ if [[ $(tail -n 1 $FILE) != "" ]]; then
     echo "" >> $FILE
 fi
 
-## Team
+## Process teams
 while IFS=, read -r TEAM ORG; do
     # Continue on first line
     [ "$TEAM" == "team" ] && continue
@@ -42,7 +52,7 @@ while IFS=, read -r TEAM ORG; do
 
     echo "Deleting team: $TEAM on $ORG"
 
-    # Delete team
+    # Delete team using GitHub API
     gh api \
         --method DELETE \
         -H "Accept: application/vnd.github+json" \
