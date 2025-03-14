@@ -1,11 +1,27 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub Repository Search Tool
+#
 # Author: Enderson Menezes
 # Created: 2025-02-07
-# Description: This script will query GitHub API to get all repositories from a specific query.
+# Updated: 2025-03-14
+#
+# Description:
+#   This script searches GitHub repositories using the GitHub API search functionality.
+#   It also enhances the search results by retrieving additional information about
+#   team ownership for each repository found. The results are saved as both JSON
+#   and CSV formats for further analysis.
+#
 # Usage: bash 16-query-github-repos.sh "QUERY"
-##
+#
+# Parameters:
+#   - QUERY: Search query for finding repositories (required)
+#
+# Outputs:
+#   - 16-query-github-repos.json: Raw search results with added repository_owner field
+#   - 16-query-github-repos.csv: CSV formatted results for easy analysis
+###############################################################################
 
 QUERY="$1"
 # Validate parameters
@@ -41,13 +57,13 @@ for REPO in $REPOS_TO_CHECK; do
     /repos/$OWNER/$REPO_NAME/teams > 16-query-github-repos-teams.json
   TEAM_PERMISSION=$(jq -r '.[] | select(.permission == "Repository owner")' 16-query-github-repos-teams.json)
   if [ -n "$TEAM_PERMISSION" ]; then
-    echo "Repository $REPO_NAME have team with 'Repository owner' permission"
+    echo "Repository $REPO_NAME has teams with 'Repository owner' permission"
     TEAMS=$(echo $TEAM_PERMISSION | jq -r '.name' | tr '\n' ',' | sed 's/,$//')
     echo "Teams: $TEAMS"
     jq --arg TEAMS "$TEAMS" --arg REPO "$REPO" '.items = (.items | map(if .full_name == $REPO then . + {"repository_owner": $TEAMS} else . end))' 16-query-github-repos.json > 16-query-github-repos.tmp.json
     mv 16-query-github-repos.tmp.json 16-query-github-repos.json
   else
-    echo "Repository $REPO_NAME don't have team with 'Repository owner' permission"
+    echo "Repository $REPO_NAME doesn't have teams with 'Repository owner' permission"
     jq --arg REPO "$REPO" '.items = (.items | map(if .full_name == $REPO then . + {"repository_owner": "Não encontrado"} else . end))' 16-query-github-repos.json > 16-query-github-repos.tmp.json
     mv 16-query-github-repos.tmp.json 16-query-github-repos.json
   fi
@@ -56,5 +72,9 @@ done
 # Create CSV from .[]items
 jq -r '.items[] | [.full_name, .html_url, .created_at, .updated_at, .pushed_at, .size, .archived, .repository_owner] | @csv' 16-query-github-repos.json > 16-query-github-repos.csv
 
-# Inserd header
+# Insert header
 sed -i '1s/^/full_name,html_url,created_at,updated_at,pushed_at,size,archived,repository_owner\n/' 16-query-github-repos.csv
+
+echo "Search completed. Results available in:"
+echo "- 16-query-github-repos.json (raw data with repository owner details)"
+echo "- 16-query-github-repos.csv (formatted data for analysis)"
