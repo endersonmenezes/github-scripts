@@ -1,11 +1,24 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub Repository Activity Analyzer
+#
 # Author: Enderson Menezes
 # Created: 2024-07-23
-# Description: This script will return a csv for activity in repositories
-# Usage: bash 10-repo-activity.sh <organization> <debug> <random_page>
-##
+# Updated: 2025-03-14
+#
+# Description:
+#   This script analyzes activity in GitHub repositories and generates a CSV
+#   report with metrics such as days since last PR, issue, commit, and action run.
+#   It focuses on repositories that have not been pushed to in over 360 days.
+#
+# Usage: bash 10-repo-activity.sh <organization> [debug] [random_page]
+#
+# Parameters:
+#   - organization: GitHub organization name
+#   - debug (optional): Set to "true" to enable debug mode
+#   - random_page (optional): Page number to fetch when in debug mode (default: 2)
+###############################################################################
 
 organization=$1
 if [ -z $organization ]; then
