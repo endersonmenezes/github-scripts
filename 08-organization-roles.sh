@@ -1,12 +1,22 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub Organization Roles Manager
+#
 # Author: Enderson Menezes
 # Created: 2024-03-08
-# Description: This script delete all teams.
+# Updated: 2025-03-14
+#
+# Description:
+#   This script manages custom organization roles in GitHub. It creates, updates,
+#   and assigns roles to teams. The script first verifies existing roles and
+#   their permissions, then updates them or creates new ones as needed.
+#
+# Input File Format (08-organization-roles.csv):
+#   organization,team,role
+#
 # Usage: bash 08-organization-roles.sh <organization>
-##
-
+###############################################################################
 
 # Args 
 ORGANIZATION=$1
@@ -113,6 +123,7 @@ verify_json_file_and_permissions() {
     fi
 }
 
+# Function to create a new organization role
 create_org_role(){
     ROLE_NAME=$1
     if [ -z "$ROLE_NAME" ]; then
@@ -166,6 +177,7 @@ create_org_role(){
     fi
 }
 
+# Function to update an existing organization role
 update_organization_role(){
     ROLE_ID=$1
     if [ -z "$ROLE_ID" ]; then
@@ -225,6 +237,8 @@ update_organization_role(){
     fi
 }
 
+### Define roles with their permissions ###
+
 ### - support - ###
 NAME="support"
 PERMISSIONS=(
@@ -272,7 +286,6 @@ DESCRIPTION="Custom role for see actions usage metrics"
 BASE_ROLE="none"
 verify_json_file_and_permissions ${FILE_NAME} ${NAME} "${DESCRIPTION}" "${BASE_ROLE}" "${PERMISSIONS[@]}"
 
-
 ### - Secret Scanning Operations - ###
 NAME="secret-scanning-operator"
 PERMISSIONS=(
@@ -281,8 +294,6 @@ PERMISSIONS=(
 DESCRIPTION="Custom role for see secret scanning alerts"
 BASE_ROLE="read"
 verify_json_file_and_permissions ${FILE_NAME} ${NAME} "${DESCRIPTION}" "${BASE_ROLE}" "${PERMISSIONS[@]}"
-
-
 
 ### - Grant to Teams - ###
 
@@ -306,7 +317,7 @@ if [ -n "$(tail -c 1 08-organization-roles.csv)" ]; then
 fi
 echo "✅ The file 08-organization-roles.csv is well formatted."
 
-# For any line in the file
+# Process each line in the file
 while IFS=, read -r CSV_ORG CSV_TEAM CSV_ROLE; do
     if [ "$CSV_ORG" != "$ORGANIZATION" ]; then
         echo "Skipping organization $CSV_ORG"
