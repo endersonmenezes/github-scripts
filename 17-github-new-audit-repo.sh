@@ -1,11 +1,29 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub Repository Comprehensive Audit Tool
+#
 # Author: Enderson Menezes
 # Created: 2025-03-07
-# Description: This script will audit a github repository getting all information from it.
-# Usage: bash 17-github-new-audit-repo.sh
-##
+# Updated: 2025-03-14
+#
+# Description:
+#   This script performs an in-depth audit of a GitHub repository by collecting
+#   various data points including repository information, workflows, workflow runs,
+#   and approval reviews. It generates detailed reports about repository activity
+#   within a specified date range.
+#
+# Usage: bash 17-github-new-audit-repo.sh REPO DATE_START DATE_END
+#
+# Parameters:
+#   - REPO: Repository in owner/repo format
+#   - DATE_START: Start date in YYYY-MM-DD format
+#   - DATE_END: End date in YYYY-MM-DD format
+#
+# Outputs:
+#   - JSON files with repository details
+#   - report.csv with workflow run approval information
+###############################################################################
 
 # Set Environment
 set -e
