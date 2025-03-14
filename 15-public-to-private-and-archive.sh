@@ -1,11 +1,22 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub Public-to-Private Repository Converter and Archiver
+#
 # Author: Enderson Menezes
 # Created: 2024-09-17
-# Description: This script will transform a public to private repository and archive the repository.
+# Updated: 2025-03-14
+#
+# Description:
+#   This script transforms public repositories to private status and archives them.
+#   It temporarily unarchives repositories if they are already archived to ensure
+#   the visibility change can be applied before re-archiving them.
+#
+# Input File Format (15-public-to-private-and-archive.csv):
+#   organization,repository
+#
 # Usage: bash 15-public-to-private-and-archive.sh
-##
+###############################################################################
 
 # Read Common Functions
 source functions.sh
