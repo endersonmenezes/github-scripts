@@ -1,11 +1,22 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub Repository Audit Tool
+#
 # Author: Enderson Menezes
 # Created: 2024-08-12
-# Description: This script reads a 13-audit-repos.csv file and audit repositories
-# Usage: bash audit-repos.sh
-##
+# Updated: 2025-03-14
+#
+# Description:
+#   This script performs a comprehensive audit of GitHub repositories based on
+#   a CSV configuration file. It collects repository details, pull requests,
+#   reviews, workflow runs, and other metadata for compliance and security analysis.
+#
+# Input File Format (13-audit-repos.csv):
+#   owner,repo,query_prs
+#
+# Usage: bash 13-audit-repos.sh
+###############################################################################
 
 # Read Common Functions
 source functions.sh
