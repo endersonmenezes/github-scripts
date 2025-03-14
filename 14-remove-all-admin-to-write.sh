@@ -1,11 +1,23 @@
 #!/usr/bin/env bash
 
-##
+###############################################################################
+# GitHub Team Permission Downgrade Tool
+#
 # Author: Enderson Menezes
 # Created: 2024-08-12
-# Description: This script downgrade all team permission on repositories from admin to write.
+# Updated: 2025-03-14
+#
+# Description:
+#   This script downgrades all team permissions on repositories from admin
+#   to write (push) level. It's useful for security compliance and
+#   implementing least-privilege access controls across repositories.
+#
 # Usage: bash 14-remove-all-admin-to-write.sh <org> <team>
-##
+#
+# Parameters:
+#   - org: GitHub organization name
+#   - team: Team slug within the organization
+###############################################################################
 
 # Read Common Functions
 source functions.sh
