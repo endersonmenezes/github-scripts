@@ -1,118 +1,89 @@
 #!/usr/bin/env bash
 
 ###############################################################################
-# Script para Coleta de Informações de Repositórios GitHub
+# GitHub Repository Information Collector
 #
-# Autor: Enderson Menezes
-# Criado: 2024-03-08
-# Atualizado: 2025-03-12
+# Author: Enderson Menezes
+# Created: 2025-03-15
 #
-# Descrição:
-#   Este script coleta informações relevantes sobre repositórios GitHub
-#   e as armazena em um arquivo CSV para análise posterior.
-#   As informações coletadas incluem: nome completo, URL, datas de criação
-#   e atualização, status de arquivamento, data de arquivamento, último push
-#   e tamanho do repositório.
+# Description:
+#   This script collects comprehensive information about GitHub repositories,
+#   including team access, branch protection rules, webhooks, and deployment
+#   environments. The collected data is stored in JSON format for analysis
+#   and documentation purposes.
 #
-# Pré-requisitos:
-#   - GitHub CLI (gh) instalado e autenticado
-#   - Arquivo CSV de entrada com a lista de repositórios no formato "owner/repo" 
-#     (uma entrada por linha)
+# Usage: bash 19-collect-repo-info.sh <organization> <repository>
 #
-# Uso: bash 19-collect-repo-info.sh
+# Parameters:
+#   - organization: GitHub organization name
+#   - repository: Repository name (without organization prefix)
 #
-# Saída: Arquivo 19-collect-repo-info-result.csv com os dados coletados
+# Outputs:
+#   - Multiple JSON files with different aspects of repository configuration
 ###############################################################################
 
-# Carrega funções comuns
-source functions.sh
+# Args
+ORGANIZATION=$1
+REPOSITORY=$2
 
-# Configurações
-API_VERSION="2022-11-28"
-ACCEPT_HEADER="application/vnd.github+json"
-OUTPUT_FILE="19-collect-repo-info-result.csv"
-
-###############################################################################
-# FUNÇÕES AUXILIARES
-###############################################################################
-
-# Função que mostra separador para melhor visualização no console
-function show_separator() {
-  echo "----------------------------------------"
-}
-
-# Função para coletar informações do repositório usando GitHub CLI
-function collect_repo_info() {
-  local owner=$1
-  local repo=$2
-  
-  echo "Coletando informações para $owner/$repo..."
-  
-  # Usar gh api para obter informações detalhadas do repositório
-  local repo_info=$(gh api \
-    --header "Accept: $ACCEPT_HEADER" \
-    --header "X-GitHub-Api-Version: $API_VERSION" \
-    repos/$owner/$repo)
-  
-  # Extrair informações necessárias usando jq
-  local full_name=$(echo $repo_info | jq -r '.full_name')
-  local html_url=$(echo $repo_info | jq -r '.html_url')
-  local created_at=$(echo $repo_info | jq -r '.created_at')
-  local updated_at=$(echo $repo_info | jq -r '.updated_at')
-  local is_archived=$(echo $repo_info | jq -r '.archived')
-  local archived_at=$(echo $repo_info | jq -r '.archived_at // "N/A"')
-  local pushed_at=$(echo $repo_info | jq -r '.pushed_at')
-  local size=$(echo $repo_info | jq -r '.size')
-  
-  # Adicionar informações ao arquivo CSV
-  echo "$full_name, $html_url, $created_at, $updated_at, $is_archived, $archived_at, $pushed_at, $size" >> $OUTPUT_FILE
-  
-  echo "Informações coletadas com sucesso para $owner/$repo"
-}
-
-###############################################################################
-# PROGRAMA PRINCIPAL
-###############################################################################
-
-# Verifica se o GitHub CLI está instalado
-is_gh_installed
-
-# Verifica se o jq está instalado
-if ! command -v jq &> /dev/null; then
-  echo "O utilitário jq não está instalado. Por favor, instale-o com 'apt-get install jq' ou equivalente."
+# Validate parameters
+if [ -z "$ORGANIZATION" ] || [ -z "$REPOSITORY" ]; then
+  echo "Usage: $0 <organization> <repository>"
   exit 1
 fi
 
-# Cria um SHA256 do arquivo para auditoria (Define variável SHA256)
-audit_file
+# Prepare output directory
+DATE=$(date '+%Y%m%d')
+OUTPUT_DIR="${DATE}_${ORGANIZATION}_${REPOSITORY}"
+mkdir -p "$OUTPUT_DIR"
 
-# Lê arquivo CSV de configuração (Define variável FILE)
-read_config_file
+# Get repository information
+echo "Collecting repository information for $ORGANIZATION/$REPOSITORY"
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/$ORGANIZATION/$REPOSITORY" > "$OUTPUT_DIR/repo_info.json"
 
-# Create CSV com cabeçalho
-echo "full_name, html_url, created_at, updated_at, is_archived, archived_at, pushed_at, size" > $OUTPUT_FILE
-echo "Criando arquivo de saída: $OUTPUT_FILE"
+# Get repository teams
+echo "Collecting team information"
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/$ORGANIZATION/$REPOSITORY/teams" > "$OUTPUT_DIR/teams.json"
 
-# Contador para acompanhamento
-total_repos=$(cat $FILE | grep -v '^#' | grep -v '^$' | wc -l)
-current_repo=0
+# Get branch protection
+echo "Collecting branch protection rules"
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/$ORGANIZATION/$REPOSITORY/branches" > "$OUTPUT_DIR/branches.json"
 
-# Processa cada repositório
-for repo_path in $(cat $FILE | grep -v '^#' | grep -v '^$' | awk -F, '{print $1}'); do
-  # Extrai o dono e nome do repositório
-  OWNER=$(echo $repo_path | awk -F/ '{print $1}')
-  REPO=$(echo $repo_path | awk -F/ '{print $2}')
+# Get default branch from repo_info.json
+DEFAULT_BRANCH=$(jq -r .default_branch "$OUTPUT_DIR/repo_info.json")
 
-  # Incrementa contador
-  ((current_repo++))
-  echo "Processando repositório [$current_repo/$total_repos]: $OWNER/$REPO"
+echo "Default branch: $DEFAULT_BRANCH"
 
-  # Collect info to csv
-  collect_repo_info $OWNER $REPO
-  
-  # Mostra separador
-  show_separator
-done
+# Get branch protection for default branch
+echo "Collecting branch protection for $DEFAULT_BRANCH"
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/$ORGANIZATION/$REPOSITORY/branches/$DEFAULT_BRANCH/protection" > "$OUTPUT_DIR/branch_protection_${DEFAULT_BRANCH}.json" || echo "No branch protection for $DEFAULT_BRANCH"
 
-echo "Processo finalizado! Os resultados foram salvos em $OUTPUT_FILE"
-echo "Total de repositórios processados: $current_repo de $total_repos"
+# Get webhooks
+echo "Collecting webhook configurations"
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/$ORGANIZATION/$REPOSITORY/hooks" > "$OUTPUT_DIR/webhooks.json"
+
+# Get environments
+echo "Collecting deployment environments"
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/$ORGANIZATION/$REPOSITORY/environments" > "$OUTPUT_DIR/environments.json" || echo "No environments found"
+
+echo "Collection complete. Data saved in directory: $OUTPUT_DIR"
+echo "Available files:"
+ls -la "$OUTPUT_DIR"
