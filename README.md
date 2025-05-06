@@ -102,6 +102,18 @@ O arquivo `functions.sh` contém funções comuns utilizadas pelos scripts:
   Deleta repositórios com menos de 1MB de tamanho.  
   _Formato do CSV: owner/repo_
 
+- **21-update-repo-properties.sh**  
+  Atualiza propriedades personalizadas para repositórios do GitHub.  
+  _Formato do CSV: owner/repo,property_key,property_value_
+
+- **22-custom-properties-organization.sh**  
+  Atualiza propriedades personalizadas para uma organização no GitHub.  
+  _Formato do CSV: owner,name,value_type,required,default_value,description,allowed_values_
+
+- **23-is-archived.sh**  
+  Verifica se repositórios estão arquivados e salva os resultados em um CSV.  
+  _Formato do CSV: owner/repo_
+
 ### Análise e auditoria
 
 - **05-list-repos-and-teams.sh**  
@@ -142,8 +154,8 @@ O arquivo `functions.sh` contém funções comuns utilizadas pelos scripts:
   Gera tokens para aplicações GitHub usando credenciais fornecidas.  
   _Formato do CSV: owner,app_id,app_install_id,file_
 
-- **20-test-azure-devops-token.sh**
-  Testa a conectividade e autenticação com Azure DevOps, incluindo feeds NuGet.
+- **20-test-azure-devops-token.sh**  
+  Testa a conectividade e autenticação com Azure DevOps, incluindo feeds NuGet.  
   _Uso: bash 20-test-azure-devops-token.sh <token> [organização] [projeto]_
 
 ## Documentação
