@@ -14,6 +14,7 @@
 #
 # Input File Format (21-update-repo-properties.csv):
 #   owner/repo,property_key,property_value
+#   test/repo1,custom_property_1,"value1"
 #
 # Usage: bash 21-update-repo-properties.sh
 ###############################################################################
@@ -44,16 +45,14 @@ function update_custom_property() {
   echo "Updating property '$key' to '$value' for repository $owner/$repo..."
   
   # Create JSON payload for the update
-  PAYLOAD="{\"properties\":[{\"property_name\":\"$key\",\"value\":\"$value\"}]}"
+  PAYLOAD="{\"properties\":[{\"property_name\":\"$key\",\"value\": $value}]}"
   
   # Make API call to update the property
-  RESPONSE=$(gh api \
+  RESPONSE=$(echo $PAYLOAD | gh api \
       --method PATCH \
       -H "Accept: $ACCEPT_HEADER" \
       -H "X-GitHub-Api-Version: $API_VERSION" \
-      "/repos/$owner/$repo/properties/values" \
-      -f "properties[][property_name]=$key" \
-      -f "properties[][value]=$value")
+      "/repos/$owner/$repo/properties/values" --input -)
   
   # Check if the update was successful
   HTTP_CODE=$?
@@ -85,6 +84,19 @@ function verify_custom_property() {
   # Extract the value of the specified property using jq
   # Find the property with the matching name and extract its value
   ACTUAL_VALUE=$(echo $PROPERTIES | jq -r ".[] | select(.property_name==\"$key\") | .value")
+
+  # TRIM AND REMOVE SPACES
+  # Handle array values by removing all whitespace between brackets and elements
+  if [[ "$ACTUAL_VALUE" == \[*\] && "$expected_value" == \[*\] ]]; then
+    # For array values, normalize JSON arrays by removing all whitespace between elements
+    # This handles multi-line JSON arrays as well as single-line arrays with spaces
+    ACTUAL_VALUE=$(echo "$ACTUAL_VALUE" | tr -d '\n\r' | sed 's/\[\s*/\[/g; s/\s*\]/\]/g; s/\s*,\s*/,/g; s/\s*"\s*/"/g')
+    expected_value=$(echo "$expected_value" | tr -d '\n\r' | sed 's/\[\s*/\[/g; s/\s*\]/\]/g; s/\s*,\s*/,/g; s/\s*"\s*/"/g')
+  else
+    # For non-array values, just trim spaces
+    ACTUAL_VALUE=$(echo "$ACTUAL_VALUE" | xargs)
+    expected_value=$(echo "$expected_value" | xargs)
+  fi
   
   # Check if the property has the expected value
   if [ "$ACTUAL_VALUE" = "$expected_value" ]; then

@@ -1,6 +1,6 @@
 owner/repo,property_key,property_value
-organization/repository1,team,backend
-organization/repository2,environment,production
-organization/repository3,status,archived
+organization/repository1,team,"backend"
+organization/repository2,environment,"production"
+organization/repository3,status,"archived"
 # Add more repositories below as needed
 # format: owner/repo,property_key,property_value
