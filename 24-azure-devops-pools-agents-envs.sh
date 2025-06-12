@@ -257,7 +257,7 @@ output_table() {
     echo -e "Total pools found: ${GREEN}$pool_count${NC}"
     echo ""
     
-    local pool_data_array=$(echo "$pools_data" | jq -r '.value[]? | select(.name) | .id + "|" + .name + "|" + .poolType + "|" + (.size | tostring)')
+    local pool_data_array=$(echo "$pools_data" | jq -r '.value[]? | select(.name) | (.id | tostring) + "|" + .name + "|" + .poolType + "|" + (.size | tostring)')
     if [ -n "$pool_data_array" ]; then
       while IFS='|' read -r pool_id pool_name pool_type pool_size; do
         [ -z "$pool_id" ] && continue
