@@ -1,6 +1,6 @@
 # GitHub Scripts
 
-Conjunto de scripts para automatizar tarefas no GitHub. Esta coleção foi criada para facilitar operações comuns de gerenciamento em organizações e repositórios do GitHub.
+Conjunto de scripts para automatizar tarefas no GitHub e Azure DevOps. Esta coleção foi criada para facilitar operações comuns de gerenciamento em organizações e repositórios do GitHub, além de integração com Azure DevOps.
 
 ## Índice
 
@@ -17,7 +17,10 @@ Conjunto de scripts para automatizar tarefas no GitHub. Esta coleção foi criad
 - Bash (para a maioria dos scripts)
 - Python 3 (para scripts específicos)
 - jq (para processamento de JSON)
-- Permissões adequadas no GitHub para as operações desejadas
+- Permissões adequadas no GitHub para as operações desejadas:
+  - Para gerenciamento de repositórios: permissões de administrador nos repositórios
+  - Para fechamento de alertas de segurança: permissões de administrador e acesso a alertas de segurança
+  - Para operações em organizações: papel apropriado na organização
 
 ## Como utilizar
 
@@ -114,6 +117,10 @@ O arquivo `functions.sh` contém funções comuns utilizadas pelos scripts:
   Verifica se repositórios estão arquivados e salva os resultados em um CSV.  
   _Formato do CSV: owner/repo_
 
+- **25-close-security-alerts-archived-repos.sh**  
+  Processa repositórios arquivados para limpar alertas de segurança. Desarquiva temporariamente, fecha alertas do Dependabot e Code scanning, e arquiva novamente.  
+  _Formato do CSV: organization,repository_
+
 ### Análise e auditoria
 
 - **05-list-repos-and-teams.sh**  
@@ -148,15 +155,21 @@ O arquivo `functions.sh` contém funções comuns utilizadas pelos scripts:
   Coleta informações detalhadas sobre configuração de repositórios.  
   _Uso: bash 19-collect-repo-info.sh <organização> <repositório>_
 
-### Autenticação
+### Autenticação e integração
 
 - **04-app-token.sh**  
   Gera tokens para aplicações GitHub usando credenciais fornecidas.  
   _Formato do CSV: owner,app_id,app_install_id,file_
 
+### Azure DevOps
+
 - **20-test-azure-devops-token.sh**  
   Testa a conectividade e autenticação com Azure DevOps, incluindo feeds NuGet.  
   _Uso: bash 20-test-azure-devops-token.sh <token> [organização] [projeto]_
+
+- **24-azure-devops-pools-agents-envs.sh**  
+  Escaneia uma organização do Azure DevOps e coleta informações sobre projetos, pools de agentes e ambientes.  
+  _Uso: bash 24-azure-devops-pools-agents-envs.sh <token> <organização> [formato_saída]_
 
 ## Documentação
 
