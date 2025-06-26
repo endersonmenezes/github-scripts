@@ -8,6 +8,39 @@
 #
 # Description:
 #   This script processes archived repositories to clean up security alerts.
+#   It supports interactive menu selection or environment variable configuration.
+#
+# Usage:
+#   Interactive mode:
+#     ./25-close-security-alerts-archived-repos.sh
+#
+#   Non-interactive mode (environment variables):
+#     CLOSE_DEPENDABOT=true CLOSE_CODE_SCANNING=true ./script.sh
+#     NON_INTERACTIVE=true CLOSE_SECRET_SCANNING=true ./script.sh
+#
+# Environment Variables:
+#   GITHUB_TOKEN        - Required: GitHub personal access token
+#   DEBUG               - Optional: Set to 'true' for verbose output
+#   NON_INTERACTIVE     - Optional: Set to 'true' to skip interactive menu
+#   CLOSE_DEPENDABOT    - Optional: Set to 'true' to close Dependabot alerts
+#   CLOSE_CODE_SCANNING - Optional: Set to 'true' to close Code scanning alerts
+#   CLOSE_SECRET_SCANNING - Optional: Set to 'true' to close Secret scanning alerts
+#
+###############################################################################
+
+# Check for environment variable overrides (for non-interactive mode)
+if [[ "${NON_INTERACTIVE:-false}" == "true" ]]; then
+    CLOSE_DEPENDABOT=${CLOSE_DEPENDABOT:-false}
+    CLOSE_CODE_SCANNING=${CLOSE_CODE_SCANNING:-false}
+    CLOSE_SECRET_SCANNING=${CLOSE_SECRET_SCANNING:-false}
+    
+    # Validate that at least one alert type is selected
+    if [[ "$CLOSE_DEPENDABOT" == "false" && "$CLOSE_CODE_SCANNING" == "false" && "$CLOSE_SECRET_SCANNING" == "false" ]]; then
+        echo "Error: In non-interactive mode, you must specify at least one alert type to close."
+        echo "Set one or more of: CLOSE_DEPENDABOT, CLOSE_CODE_SCANNING, CLOSE_SECRET_SCANNING to 'true'"
+        exit 1
+    fi
+fi
 #   For each repository in the CSV file, it:
 #   1. Checks if the repository is archived
 #   2. If archived, temporarily unarchives it
@@ -28,6 +61,125 @@ source functions.sh
 
 # Debug mode (set to true to enable verbose API responses)
 DEBUG=${DEBUG:-false}
+
+# Global variables for what to close
+CLOSE_DEPENDABOT=false
+CLOSE_CODE_SCANNING=false
+CLOSE_SECRET_SCANNING=false
+
+# Function to show selection menu
+show_selection_menu() {
+    echo ""
+    echo "=========================================="
+    echo "  Security Alerts Cleanup Options"
+    echo "=========================================="
+    echo ""
+    echo "Select which types of alerts to close:"
+    echo ""
+    echo "1) Dependabot alerts"
+    echo "2) Code scanning alerts" 
+    echo "3) Secret scanning alerts"
+    echo "4) All alert types"
+    echo "5) Custom selection"
+    echo "6) Exit"
+    echo ""
+    
+    while true; do
+        read -p "Choose an option (1-6): " choice
+        case $choice in
+            1)
+                CLOSE_DEPENDABOT=true
+                echo "✓ Selected: Dependabot alerts only"
+                break
+                ;;
+            2)
+                CLOSE_CODE_SCANNING=true
+                echo "✓ Selected: Code scanning alerts only"
+                break
+                ;;
+            3)
+                CLOSE_SECRET_SCANNING=true
+                echo "✓ Selected: Secret scanning alerts only"
+                break
+                ;;
+            4)
+                CLOSE_DEPENDABOT=true
+                CLOSE_CODE_SCANNING=true
+                CLOSE_SECRET_SCANNING=true
+                echo "✓ Selected: All alert types"
+                break
+                ;;
+            5)
+                custom_selection_menu
+                break
+                ;;
+            6)
+                echo "Exiting..."
+                exit 0
+                ;;
+            *)
+                echo "Invalid option. Please choose 1-6."
+                ;;
+        esac
+    done
+    echo ""
+}
+
+# Function for custom selection
+custom_selection_menu() {
+    echo ""
+    echo "Custom Selection - Choose multiple types:"
+    echo ""
+    
+    while true; do
+        read -p "Close Dependabot alerts? (y/n): " dep_choice
+        case $dep_choice in
+            [Yy]* ) CLOSE_DEPENDABOT=true; break;;
+            [Nn]* ) CLOSE_DEPENDABOT=false; break;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
+    
+    while true; do
+        read -p "Close Code scanning alerts? (y/n): " code_choice
+        case $code_choice in
+            [Yy]* ) CLOSE_CODE_SCANNING=true; break;;
+            [Nn]* ) CLOSE_CODE_SCANNING=false; break;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
+    
+    while true; do
+        read -p "Close Secret scanning alerts? (y/n): " secret_choice
+        case $secret_choice in
+            [Yy]* ) CLOSE_SECRET_SCANNING=true; break;;
+            [Nn]* ) CLOSE_SECRET_SCANNING=false; break;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
+    
+    echo ""
+    echo "✓ Custom selection complete:"
+    echo "  - Dependabot: $([[ $CLOSE_DEPENDABOT == true ]] && echo "Yes" || echo "No")"
+    echo "  - Code scanning: $([[ $CLOSE_CODE_SCANNING == true ]] && echo "Yes" || echo "No")"
+    echo "  - Secret scanning: $([[ $CLOSE_SECRET_SCANNING == true ]] && echo "Yes" || echo "No")"
+}
+
+# Show selection menu (unless running in non-interactive mode)
+if [[ "${NON_INTERACTIVE:-false}" != "true" ]]; then
+    show_selection_menu
+else
+    echo ""
+    echo "=========================================="
+    echo "  Non-Interactive Mode"
+    echo "=========================================="
+    echo ""
+    echo "Configuration from environment variables:"
+    echo "  - Dependabot: $([[ $CLOSE_DEPENDABOT == true ]] && echo "Yes" || echo "No")"
+    echo "  - Code scanning: $([[ $CLOSE_CODE_SCANNING == true ]] && echo "Yes" || echo "No")"
+    echo "  - Secret scanning: $([[ $CLOSE_SECRET_SCANNING == true ]] && echo "Yes" || echo "No")"
+    echo ""
+fi
 
 # Verify GH is installed
 is_gh_installed
@@ -315,14 +467,24 @@ while IFS=, read -r ORG REPO; do
         continue
     fi
 
-    # Close Dependabot alerts
-    close_dependabot_alerts "$ORG" "$REPO"
+    # Close security alerts based on user selection
+    if [[ "$CLOSE_DEPENDABOT" == "true" ]]; then
+        close_dependabot_alerts "$ORG" "$REPO"
+    else
+        echo "  Skipping Dependabot alerts (not selected)"
+    fi
     
-    # Close Code scanning alerts
-    close_code_scanning_alerts "$ORG" "$REPO"
+    if [[ "$CLOSE_CODE_SCANNING" == "true" ]]; then
+        close_code_scanning_alerts "$ORG" "$REPO"
+    else
+        echo "  Skipping Code scanning alerts (not selected)"
+    fi
     
-    # Close Secret scanning alerts
-    close_secret_scanning_alerts "$ORG" "$REPO"
+    if [[ "$CLOSE_SECRET_SCANNING" == "true" ]]; then
+        close_secret_scanning_alerts "$ORG" "$REPO"
+    else
+        echo "  Skipping Secret scanning alerts (not selected)"
+    fi
     
     # Re-archive the repository
     echo "  Re-archiving repository..."
