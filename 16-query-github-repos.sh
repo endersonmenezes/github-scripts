@@ -54,6 +54,7 @@ for REPO in $REPOS_TO_CHECK; do
   gh api \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
+    --paginate \
     /repos/$OWNER/$REPO_NAME/teams > 16-query-github-repos-teams.json
   TEAM_PERMISSION=$(jq -r '.[] | select(.permission == "Repository owner")' 16-query-github-repos-teams.json)
   if [ -n "$TEAM_PERMISSION" ]; then
