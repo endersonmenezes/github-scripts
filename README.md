@@ -121,6 +121,30 @@ O arquivo `functions.sh` contém funções comuns utilizadas pelos scripts:
   Processa repositórios arquivados para limpar alertas de segurança. Desarquiva temporariamente, fecha alertas do Dependabot e Code scanning, e arquiva novamente.  
   _Formato do CSV: organization,repository_
 
+- **26-search-and-replace.sh**  
+  Busca por padrões de código em repositórios do GitHub e aplica substituições usando regex. Cria pull requests automáticos com descrições detalhadas e gera arquivos de resultado.  
+  
+  **Formato do CSV:**
+  ```csv
+  query,search_pattern,replace_pattern,file_pattern,commit_message
+  ```
+  
+  **Descrição das colunas:**
+  - `query`: Query de busca do GitHub (ex: `org:stone-payments spot path:.github`, `repo:owner/name keyword`)
+  - `search_pattern`: Padrão regex para buscar no conteúdo dos arquivos (ex: `runs-on: (.+)-spot`)
+  - `replace_pattern`: Padrão de substituição com grupos de captura (ex: `runs-on: \1`)
+  - `file_pattern`: Padrões de arquivo separados por `;` (ex: `*.yml;*.yaml;*.py`)
+  - `commit_message`: Mensagem do commit e título do PR
+  
+  _Uso: bash 26-search-and-replace.sh [--dry-run] [--debug]_  
+  _Funcionalidades: Busca por API, PRs automáticos, modo dry-run, output para arquivo_
+  
+  **Dicas importantes:**
+  - Use `--dry-run` para testar antes de executar
+  - Queries sem aspas funcionam melhor: `org:name keyword` em vez de `"org:name keyword"`
+  - Padrões de arquivo usam `;` como separador: `*.yml;*.yaml`
+  - Regex suporta grupos de captura: `(.+)` pode ser referenciado como `\1`
+
 ### Análise e auditoria
 
 - **05-list-repos-and-teams.sh**  

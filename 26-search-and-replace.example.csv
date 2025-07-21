@@ -1,0 +1,5 @@
+query,search_pattern,replace_pattern,file_pattern,commit_message
+org:your-org spot path:.github,"runs-on: (.+)-spot","runs-on: \1","*.yml;*.yaml","Remove -spot from GitHub Actions runners"
+org:your-org ubuntu-latest path:.github/workflows,"runs-on: ubuntu-latest","runs-on: ubuntu-22.04","*.yml;*.yaml","Update to specific Ubuntu version"
+repo:your-org/specific-repo node-version path:.github/workflows,"node-version: (\d+)","node-version: 20","*.yml;*.yaml","Update Node.js to version 20"
+org:your-org python-version path:.github,"python-version: ['\"]?3\.8['\"]?","python-version: '3.11'","*.yml;*.yaml;*.py","Update Python from 3.8 to 3.11"
