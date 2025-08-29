@@ -13,12 +13,14 @@
 #   'main' and 'master' branches to ensure comprehensive coverage.
 #   Uses 'gh search prs' for efficient organization-wide search.
 #
-# Usage: bash 30-pr-daily-search.sh [START_DATE] [END_DATE] [--test]
+# Usage: bash 30-pr-daily-search.sh [START_DATE] [END_DATE] [--test] [--debug]
 #
 # Parameters:
 #   START_DATE: Start date in YYYY-MM-DD format (default: 2025-01-01)
 #   END_DATE:   End date in YYYY-MM-DD format (default: today)
 #   --test:     Test mode - process only first 3 days
+#   --debug:    Enable detailed debug output for API errors
+#   --debug:    Enable detailed debug output for API errors
 #
 # Input File: 30-pr-daily-search.csv
 # Format: organization
@@ -49,6 +51,7 @@ source ./functions.sh
 
 # Global variables
 TEST_MODE=false
+DEBUG_MODE=false
 START_DATE="2025-01-01"
 END_DATE=""
 PROCESSED_DAYS=0
@@ -67,7 +70,15 @@ NC='\033[0m' # No Color
 print_status() {
     local color=$1
     local message=$2
-    echo -e "${color}${message}${NC}"
+    echo -e "${color}${message}${NC}" >&2
+}
+
+# Function to print debug output (only when DEBUG_MODE is true)
+print_debug() {
+    if [[ "${DEBUG_MODE}" == true ]]; then
+        local message=$1
+        echo -e "${CYAN}[DEBUG]${NC} ${message}" >&2
+    fi
 }
 
 # Function to setup temporary directory
@@ -160,6 +171,12 @@ search_prs_for_date() {
     
     print_status "${BLUE}" "  Searching ${organization} (${branch}): ${search_date}"
     
+    # Debug information
+    print_debug "Organization: ${organization}"
+    print_debug "Branch: ${branch}" 
+    print_debug "Date: ${search_date}"
+    print_debug "Temp file: ${temp_file}"
+    
     # Initialize results array
     echo '{"items": []}' > "${all_results_file}"
     
@@ -168,16 +185,34 @@ search_prs_for_date() {
         local query="org:${organization}+type:pr+is:merged+merged:${search_date}+base:${branch}"
         local api_url="/search/issues?q=${query}&page=${page}&per_page=${per_page}"
         
-        # Make API call using gh api
+        print_debug "Page ${page}: API URL = ${api_url}"
+        print_debug "Page ${page}: Query = ${query}"
+        
+        # Make API call using gh api with detailed error capture
+        local api_error_file="${temp_file}.error"
         if timeout 45 gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "${api_url}" > "${temp_file}" 2>/dev/null; then
+            "${api_url}" > "${temp_file}" 2>"${api_error_file}"; then
             
-            # Check for API errors or rate limiting
+            # Check for API errors or rate limiting in response
             if jq -e '.message' "${temp_file}" >/dev/null 2>&1; then
                 local error_msg=$(jq -r '.message' "${temp_file}")
-                print_status "${RED}" "    ✗ API error: ${error_msg}"
+                local error_type=$(jq -r '.documentation_url // "unknown"' "${temp_file}")
+                print_status "${RED}" "    ✗ API Response Error: ${error_msg}"
+                print_status "${RED}" "      Query: ${query}"
+                print_status "${RED}" "      URL: ${api_url}"
+                print_status "${RED}" "      Documentation: ${error_type}"
+                
+                # Show full API response for debugging
+                if [[ -s "${temp_file}" ]]; then
+                    print_status "${YELLOW}" "      Full API Response:"
+                    jq '.' "${temp_file}" | head -10 | while read line; do
+                        print_status "${YELLOW}" "        ${line}"
+                    done
+                fi
+                
+                rm -f "${api_error_file}"
                 break
             fi
             
@@ -208,11 +243,31 @@ search_prs_for_date() {
             fi
         else
             local exit_code=$?
-            if [[ $exit_code -eq 124 ]]; then
-                print_status "${RED}" "    ✗ Timeout on page ${page} for ${organization} (${branch})"
-            else
-                print_status "${RED}" "    ✗ API error on page ${page} for ${organization} (${branch})"
+            print_status "${RED}" "    ✗ Command failed on page ${page} for ${organization} (${branch})"
+            print_status "${RED}" "      Exit code: ${exit_code}"
+            print_status "${RED}" "      Query: ${query}"
+            print_status "${RED}" "      URL: ${api_url}"
+            
+            # Show stderr output if available
+            if [[ -s "${api_error_file}" ]]; then
+                print_status "${YELLOW}" "      Error output:"
+                while read line; do
+                    print_status "${YELLOW}" "        ${line}"
+                done < "${api_error_file}"
             fi
+            
+            # Show specific error types
+            if [[ $exit_code -eq 124 ]]; then
+                print_status "${RED}" "      Type: Command timeout (45s exceeded)"
+            elif [[ $exit_code -eq 1 ]]; then
+                print_status "${RED}" "      Type: GitHub CLI authentication or API error"
+            elif [[ $exit_code -eq 2 ]]; then
+                print_status "${RED}" "      Type: Invalid command or parameters"
+            else
+                print_status "${RED}" "      Type: Unknown error (exit code ${exit_code})"
+            fi
+            
+            rm -f "${api_error_file}"
             break
         fi
     done
@@ -281,6 +336,7 @@ Parameters:
   START_DATE   Start date in YYYY-MM-DD format (default: 2025-01-01)
   END_DATE     End date in YYYY-MM-DD format (default: today)
   --test       Test mode - process only the first 3 days
+  --debug      Enable detailed debug output for troubleshooting API issues
 
 Input File: 30-pr-daily-search.csv
 Format:
@@ -324,6 +380,10 @@ main() {
         case $1 in
             --test)
                 TEST_MODE=true
+                shift
+                ;;
+            --debug)
+                DEBUG_MODE=true
                 shift
                 ;;
             --help|-h)
