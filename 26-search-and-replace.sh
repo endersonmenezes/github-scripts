@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Script: 26-search-and-replace.sh
+# Scr- query:           GitHub search query (e.g., 'org:your-org spot path:.github')
+# - search_pattern:  Regex pattern to find (e.g., 'runs-on: (.+)-spot')t: 26-search-and-replace.sh
 # Description: Search for code patterns across GitHub repositories and apply regex replacements
 # Author: Enderson Menezes
 # E-mail: mail@enderson.dev
@@ -16,14 +17,14 @@
 # CSV Format: query,search_pattern,replace_pattern,file_pattern,commit_message
 #
 # Column Details:
-#   query: GitHub search query without quotes (e.g., "org:stone-payments spot path:.github")
+#   query: GitHub search query without quotes (e.g., "org:your-org spot path:.github")
 #   search_pattern: Regex pattern with capture groups (e.g., "runs-on: (.+)-spot")
 #   replace_pattern: Replacement with group references (e.g., "runs-on: \1")
 #   file_pattern: File patterns separated by semicolons (e.g., "*.yml;*.yaml")
 #   commit_message: Commit message and PR title
 #
 # Example CSV entries:
-#   org:stone-payments spot path:.github,"runs-on: (.+)-spot","runs-on: \1","*.yml;*.yaml","Remove -spot from runners"
+#   org:your-org spot path:.github,"runs-on: (.+)-spot","runs-on: \1","*.yml;*.yaml","Remove -spot from runners"
 #   repo:owner/name python-version,"python-version: '3.8'","python-version: '3.11'","*.py;*.yml","Update Python version"
 #
 # Features:
