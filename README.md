@@ -145,6 +145,30 @@ O arquivo `functions.sh` contém funções comuns utilizadas pelos scripts:
   - Padrões de arquivo usam `;` como separador: `*.yml;*.yaml`
   - Regex suporta grupos de captura: `(.+)` pode ser referenciado como `\1`
 
+- **29-download-wiki.sh**  
+  Baixa toda a Wiki de um repositório do GitHub em formato markdown.  
+  _Uso: bash 29-download-wiki.sh <repository_url_or_name> [output_dir]_  
+  
+  **Exemplos de uso:**
+  ```bash
+  # Usando URL da wiki
+  bash 29-download-wiki.sh https://github.com/dlpco/developers/wiki/
+  
+  # Usando nome do repositório
+  bash 29-download-wiki.sh dlpco/developers
+  
+  # Especificando diretório de saída
+  bash 29-download-wiki.sh dlpco/developers /tmp/my_wiki
+  ```
+  
+  **Funcionalidades:**
+  - Download via clone git (método preferido - mantém histórico)
+  - Fallback via API do GitHub (para wikis que não permitem clone)
+  - Criação automática de índice com lista de páginas
+  - Verificação de dependências e autenticação
+  - Relatório de estatísticas do download
+  - Suporte a diferentes formatos de entrada (URL ou owner/repo)
+
 ### Análise e auditoria
 
 - **05-list-repos-and-teams.sh**  
@@ -178,6 +202,45 @@ O arquivo `functions.sh` contém funções comuns utilizadas pelos scripts:
 - **19-collect-repo-info.sh**  
   Coleta informações detalhadas sobre configuração de repositórios.  
   _Uso: bash 19-collect-repo-info.sh <organização> <repositório>_
+
+- **27-github-contribs.sh**  
+  Coleta estatísticas de contribuidores de repositórios GitHub.  
+  _Formato do CSV: reporsitory (owner/repo)_  
+  _Uso: bash 27-github-contribs.sh [--test]_  
+  
+  **Funcionalidades:**
+  - Extrai total de contribuições e lista de contribuidores
+  - Paginação automática da API do GitHub
+  - Modo de teste (apenas primeiros 10 repositórios)
+  - Saída em CSV com formato: repo,total_contribs,contribs
+  - Tratamento abrangente de erros e rastreamento de progresso
+
+- **28-go-dependencies-audit.sh**  
+  Audita repositórios Go e extrai dependências e estrutura do projeto.  
+  _Uso: bash 28-go-dependencies-audit.sh <organization_name> [--test]_  
+  
+  **Funcionalidades:**
+  - Análise de dependências a partir de arquivos go.mod
+  - Análise de estrutura de projeto (pastas app, domain, extensions, gateways, proto, etc.)
+  - Rastreamento de data do último commit
+  - Modo de teste para validação
+  - Saída em dois CSVs: dependencies e project structure
+  - Paginação automática da API do GitHub
+
+- **30-pr-daily-search.sh**  
+  Busca PRs mergeados dia a dia em múltiplas organizações do GitHub.  
+  _Formato do CSV: organization_  
+  _Uso: bash 30-pr-daily-search.sh [DATA_INICIO] [DATA_FIM] [--test]_  
+  
+  **Funcionalidades:**
+  - Busca por PRs mergeados em branches main/master
+  - Período configurável (padrão: 2025-01-01 até hoje)
+  - Modo de teste (apenas primeiros 3 dias)
+  - Rate limiting inteligente para evitar limites da API
+  - Saída em CSV com informações completas do PR
+  - Usa 'gh search prs' para busca eficiente por organização
+  - Progresso detalhado e estimativas de tempo
+  - Tratamento robusto de erros e validação de datas
 
 ### Autenticação e integração
 
