@@ -51,9 +51,9 @@ INPUT_FILE="${SCRIPT_NAME}.csv"
 OUTPUT_FILE="${SCRIPT_NAME}-results.csv"
 SEND_EMAIL=true
 GLOBAL_METADATA=""
-TOTAL_PROCESSED=0
-TOTAL_SUCCESS=0
-TOTAL_FAILED=0
+declare -i TOTAL_PROCESSED=0
+declare -i TOTAL_SUCCESS=0
+declare -i TOTAL_FAILED=0
 
 # Color codes for output
 RED='\033[0;31m'
@@ -207,7 +207,7 @@ issue_badge() {
     if [[ "$http_code" == "200" || "$http_code" == "201" ]]; then
         status="SUCCESS"
         response_message="Badge issued successfully"
-        ((TOTAL_SUCCESS++))
+        TOTAL_SUCCESS=$((TOTAL_SUCCESS + 1))
         print_status "${GREEN}" "   ✅ Success!"
     else
         status="FAILED"
@@ -217,7 +217,7 @@ issue_badge() {
         else
             response_message="HTTP $http_code - No response body"
         fi
-        ((TOTAL_FAILED++))
+        TOTAL_FAILED=$((TOTAL_FAILED + 1))
         print_status "${RED}" "   ❌ Failed: $response_message"
     fi
     
@@ -227,7 +227,7 @@ issue_badge() {
     # Clean up temporary file
     rm -f "$response_file"
     
-    ((TOTAL_PROCESSED++))
+    TOTAL_PROCESSED=$((TOTAL_PROCESSED + 1))
 }
 
 # Process CSV file and issue badges
@@ -239,7 +239,7 @@ process_badges() {
     local header_processed=false
     
     while IFS=',' read -r email sticker_id file_metadata || [[ -n "$email" ]]; do
-        ((line_number++))
+        line_number=$((line_number + 1))
         
         # Skip header line
         if [[ "$header_processed" == false ]]; then
