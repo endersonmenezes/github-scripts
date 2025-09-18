@@ -258,6 +258,26 @@ O arquivo `functions.sh` contém funções comuns utilizadas pelos scripts:
   Escaneia uma organização do Azure DevOps e coleta informações sobre projetos, pools de agentes e ambientes.  
   _Uso: bash 24-azure-devops-pools-agents-envs.sh <token> <organização> [formato_saída]_
 
+### Holopin Integration
+
+- **31-holopin-badge-generator.sh**  
+  Gera e emite badges do Holopin para destinatários com base em endereços de email e IDs de stickers.  
+  _Formato do CSV: email,sticker_id[,metadata]_  
+  _Uso: bash 31-holopin-badge-generator.sh [--no-email] [--metadata="custom metadata"]_  
+  
+  **Variáveis de ambiente obrigatórias:**
+  - `HOLOPIN_KEY`: Chave da API do Holopin
+  
+  **Funcionalidades:**
+  - Emissão de badges em lote com entrada CSV
+  - Notificações por email opcionais (configurável com --no-email)
+  - Suporte a metadata personalizado (por badge ou global)
+  - Tratamento abrangente de erros e logging
+  - Rate limiting para respeitar limites da API
+  - Rastreamento detalhado de resultados
+  - Validação de formato de email
+  - Geração de relatório de resumo com estatísticas
+
 ## Documentação
 
 Cada script contém em seu cabeçalho:
